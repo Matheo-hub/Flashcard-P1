@@ -1,46 +1,26 @@
-// --- BASE DE DONNÉES (Dossiers, Import/Export, Âge des cartes) ---
 let db = JSON.parse(localStorage.getItem('flashcards_db')) || { folders: [] };
 let currentFolderId = null;
 let currentImageBase64 = null;
 
-// Variables pour le mode Révision
 let reviewQueue = [];
 let currentQueueIndex = 0;
 let cardsReviewedCount = 0;
-let reviewMode = 'global'; // 'global' ou 'folder'
+let reviewMode = 'global'; 
 
 let touchStartX = 0;
 let touchEndX = 0;
 
-// --- NAVIGATION ---
 function switchView(viewId) {
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.view, .view-fullscreen').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
     
-    const btnBack = document.getElementById('btn-back');
-    const btnImport = document.getElementById('btn-stats');
-    
-    if (viewId === 'view-home') {
-        btnBack.style.display = 'none';
-        btnImport.style.display = 'block';
-        renderFolders();
-    } else {
-        btnBack.style.display = 'block';
-        btnImport.style.display = 'none';
-    }
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+    if(viewId === 'view-home') document.querySelectorAll('.tab-item')[0].classList.add('active');
+
+    if (viewId === 'view-home') renderFolders();
 }
 
-function goBack() {
-    if (document.getElementById('view-create').classList.contains('active') || document.getElementById('view-review').classList.contains('active')) {
-        if (currentFolderId) switchView('view-folder');
-        else switchView('view-home');
-    } else if (document.getElementById('view-folder').classList.contains('active')) {
-        currentFolderId = null;
-        switchView('view-home');
-    }
-}
-
-// --- GESTION DES DOSSIERS ---
+// Gestion des dossiers
 function createFolder() {
     const name = prompt("Nom du nouveau dossier :");
     if (name) {
@@ -53,24 +33,16 @@ function createFolder() {
 function renderFolders() {
     const list = document.getElementById('folders-list');
     list.innerHTML = '';
-    
     db.folders.forEach(folder => {
-        let totalTries = 0;
-        let totalCorrect = 0;
-        folder.cards.forEach(c => {
-            totalTries += (c.correct + c.wrong);
-            totalCorrect += c.correct;
-        });
-        const successRate = totalTries > 0 ? Math.round((totalCorrect / totalTries) * 100) : 0;
-
+        const total = folder.cards.length;
         const el = document.createElement('div');
         el.className = 'list-item';
         el.innerHTML = `
-            <div class="item-info" onclick="openFolder(${folder.id})">
-                <h4>${folder.name}</h4>
-                <div class="item-stats">${folder.cards.length} cartes | Réussite : ${successRate}%</div>
+            <div style="flex:1" onclick="openFolder(${folder.id})">
+                <div class="list-item-title">${folder.name}</div>
+                <div class="list-item-stats">${total} cartes</div>
             </div>
-            <button class="btn-delete" onclick="deleteFolder(${folder.id}, event)">🗑️</button>
+            <button class="btn-icon" onclick="deleteFolder(${folder.id}, event)">✕</button>
         `;
         list.appendChild(el);
     });
@@ -84,20 +56,25 @@ function openFolder(id) {
 
 function deleteFolder(id, event) {
     event.stopPropagation();
-    if (confirm("Supprimer ce dossier et toutes ses cartes ?")) {
+    if (confirm("Supprimer ce dossier ?")) {
         db.folders = db.folders.filter(f => f.id !== id);
         saveDB();
         renderFolders();
     }
 }
 
-// --- GESTION DES CARTES ---
-function showCreateView() {
-    document.getElementById('card-image-input').value = "";
-    document.getElementById('card-q-input').value = "";
-    document.getElementById('card-a-input').value = "";
-    currentImageBase64 = null;
-    switchView('view-create');
+// Gestion des Vues de Création (Manuel ou Express)
+function showCreateView(type) {
+    if (type === 'manual') {
+        document.getElementById('card-image-input').value = "";
+        document.getElementById('card-q-input').value = "";
+        document.getElementById('card-a-input').value = "";
+        currentImageBase64 = null;
+        switchView('view-create-manual');
+    } else {
+        document.getElementById('express-textarea').value = "";
+        switchView('view-create-express');
+    }
 }
 
 document.getElementById('card-image-input').addEventListener('change', function(e) {
@@ -109,29 +86,52 @@ document.getElementById('card-image-input').addEventListener('change', function(
     }
 });
 
-function saveCard() {
+function saveManualCard() {
     const q = document.getElementById('card-q-input').value.trim();
     const a = document.getElementById('card-a-input').value.trim();
-    
-    if (!q && !currentImageBase64) {
-        alert("Il faut au moins une question ou une image !");
-        return;
-    }
+    if (!q && !currentImageBase64) return alert("Veuillez saisir une question ou une image !");
+    if (!a) return alert("Veuillez saisir une réponse !");
 
-    const newCard = {
-        id: Date.now(),
-        createdAt: Date.now(), // Age de la carte
-        q: q,
-        a: a,
-        img: currentImageBase64,
-        correct: 0,
-        wrong: 0
-    };
-
-    const folder = db.folders.find(f => f.id === currentFolderId);
-    folder.cards.push(newCard);
+    const newCard = { id: Date.now() + Math.random(), createdAt: Date.now(), q: q, a: a, img: currentImageBase64, correct: 0, wrong: 0 };
+    db.folders.find(f => f.id === currentFolderId).cards.push(newCard);
     saveDB();
     openFolder(currentFolderId);
+}
+
+function saveExpressCards() {
+    const text = document.getElementById('express-textarea').value.trim();
+    if (!text) return alert("Le champ est vide !");
+
+    const lines = text.split('\n');
+    let addedCount = 0;
+
+    lines.forEach(line => {
+        const parts = line.split('|');
+        if (parts.length >= 2) {
+            const q = parts[0].trim();
+            const a = parts.slice(1).join('|').trim(); // Au cas où il y a d'autres séparateurs
+            if (q && a) {
+                db.folders.find(f => f.id === currentFolderId).cards.push({
+                    id: Date.now() + Math.random(),
+                    createdAt: Date.now(),
+                    q: q,
+                    a: a,
+                    img: null,
+                    correct: 0,
+                    wrong: 0
+                });
+                addedCount++;
+            }
+        }
+    });
+
+    if (addedCount > 0) {
+        saveDB();
+        openFolder(currentFolderId);
+        alert(`${addedCount} cartes ajoutées avec succès !`);
+    } else {
+        alert("Format invalide. Assurez-vous d'utiliser le séparateur '|'.");
+    }
 }
 
 function renderCards() {
@@ -141,45 +141,37 @@ function renderCards() {
     list.innerHTML = '';
     
     folder.cards.forEach(card => {
-        const ageDays = Math.floor((Date.now() - card.createdAt) / (1000 * 60 * 60 * 24));
-        const total = card.correct + card.wrong;
-        const rate = total > 0 ? Math.round((card.correct / total) * 100) : 0;
-        
         const el = document.createElement('div');
         el.className = 'list-item';
         el.innerHTML = `
-            <div class="item-info">
-                <h4>${card.q.substring(0, 30) || 'Image...'}</h4>
-                <div class="item-stats">Âge: ${ageDays}j | Vues: ${total} | Réussite: ${rate}%</div>
+            <div style="flex:1">
+                <div class="list-item-title">${card.q.substring(0, 30) || 'Image...'}</div>
+                <div class="list-item-stats">Réponse : ${card.a.substring(0, 30)}</div>
             </div>
-            <button class="btn-delete" onclick="deleteCard(${card.id})">🗑️</button>
+            <button class="btn-icon" onclick="deleteCard(${card.id})">✕</button>
         `;
         list.appendChild(el);
     });
 }
 
-function deleteCard(cardId) {
+function deleteCard(id) {
     if (confirm("Supprimer cette carte ?")) {
         const folder = db.folders.find(f => f.id === currentFolderId);
-        folder.cards = folder.cards.filter(c => c.id !== cardId);
+        folder.cards = folder.cards.filter(c => c.id !== id);
         saveDB();
         renderCards();
     }
 }
 
-// --- IMPORT / EXPORT JSON ---
-function saveDB() {
-    localStorage.setItem('flashcards_db', JSON.stringify(db));
-}
-
+// Import/Export
+function saveDB() { localStorage.setItem('flashcards_db', JSON.stringify(db)); }
 function exportData() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", "flashcards_backup.json");
-    dlAnchorElem.click();
+    const dl = document.createElement('a');
+    dl.setAttribute("href", dataStr);
+    dl.setAttribute("download", "flashcards_backup.json");
+    dl.click();
 }
-
 function importData(event) {
     const file = event.target.files[0];
     if (file) {
@@ -188,47 +180,30 @@ function importData(event) {
             try {
                 const importedDB = JSON.parse(e.target.result);
                 if (importedDB && importedDB.folders) {
-                    
-                    // On parcourt les dossiers importés pour les ajouter
-                    importedDB.folders.forEach(importedFolder => {
-                        // On génère de nouveaux ID pour éviter les bugs
-                        importedFolder.id = Date.now() + Math.random(); 
-                        importedFolder.cards.forEach(card => card.id = Date.now() + Math.random());
-                        
-                        // On ajoute le dossier à ta base de données actuelle
-                        db.folders.push(importedFolder);
+                    importedDB.folders.forEach(f => {
+                        f.id = Date.now() + Math.random(); 
+                        f.cards.forEach(c => c.id = Date.now() + Math.random());
+                        db.folders.push(f);
                     });
-                    
                     saveDB();
                     renderFolders();
-                    alert("Les cartes ont été ajoutées avec succès à tes dossiers !");
+                    alert("Import fusionné avec succès !");
                 }
-            } catch (err) {
-                alert("Erreur lors de l'importation. Fichier invalide.");
-            }
+            } catch (err) { alert("Fichier invalide."); }
         };
         reader.readAsText(file);
     }
 }
 
-// --- MOTEUR DE RÉVISION (Boucle Infinie) ---
+// Moteur de révision (Boucle & Swipe)
 function startReview(mode) {
     reviewMode = mode;
     let cardsToReview = [];
+    if (mode === 'global') db.folders.forEach(f => cardsToReview.push(...f.cards));
+    else cardsToReview = [...db.folders.find(f => f.id === currentFolderId).cards];
 
-    if (mode === 'global') {
-        db.folders.forEach(f => cardsToReview.push(...f.cards));
-    } else {
-        const folder = db.folders.find(f => f.id === currentFolderId);
-        cardsToReview = [...folder.cards];
-    }
+    if (cardsToReview.length === 0) return alert("Aucune carte à réviser !");
 
-    if (cardsToReview.length === 0) {
-        alert("Il n'y a aucune carte à réviser ici !");
-        return;
-    }
-
-    // Mélange initial
     reviewQueue = cardsToReview.sort(() => Math.random() - 0.5);
     currentQueueIndex = 0;
     cardsReviewedCount = 0;
@@ -238,32 +213,23 @@ function startReview(mode) {
 }
 
 function loadCardToUI() {
-    document.getElementById('review-progress').innerText = `Cartes vues (session) : ${cardsReviewedCount}`;
-    
+    document.getElementById('review-progress').innerText = `Vues : ${cardsReviewedCount}`;
     const cardData = reviewQueue[currentQueueIndex];
     const fc = document.getElementById('flashcard');
-    const controls = document.getElementById('review-controls');
     
     fc.classList.remove('is-flipped', 'swipe-right-preview', 'swipe-left-preview');
-    controls.classList.remove('visible');
+    document.getElementById('review-controls').classList.remove('visible');
     fc.style.transform = '';
 
-    // Recto
     document.getElementById('view-q-text').innerText = cardData.q;
     const imgEl = document.getElementById('view-q-img');
-    if (cardData.img) {
-        imgEl.src = cardData.img;
-        imgEl.style.display = 'block';
-    } else {
-        imgEl.style.display = 'none';
-    }
+    if (cardData.img) { imgEl.src = cardData.img; imgEl.style.display = 'block'; } 
+    else { imgEl.style.display = 'none'; }
 
-    // Verso
     document.getElementById('view-q-reminder').innerText = cardData.q ? "Q: " + cardData.q : "Q: [Image]";
     document.getElementById('view-a-text').innerText = cardData.a;
 }
 
-// Retourner la carte
 document.getElementById('flashcard').addEventListener('click', function() {
     if (!this.classList.contains('is-flipped')) {
         this.classList.add('is-flipped');
@@ -271,11 +237,8 @@ document.getElementById('flashcard').addEventListener('click', function() {
     }
 });
 
-// Validation
 function handleAnswer(isCorrect) {
     const currentCard = reviewQueue[currentQueueIndex];
-    
-    // Trouver la vraie carte dans la base de données pour mettre à jour les stats
     let realCard = null;
     db.folders.forEach(f => {
         const found = f.cards.find(c => c.id === currentCard.id);
@@ -283,82 +246,50 @@ function handleAnswer(isCorrect) {
     });
 
     if (realCard) {
-        if (isCorrect) {
-            realCard.correct++;
-        } else {
+        if (isCorrect) realCard.correct++;
+        else {
             realCard.wrong++;
-            // Insérer une copie de cette carte 5 positions plus loin !
-            const insertIndex = currentQueueIndex + 5;
-            reviewQueue.splice(insertIndex, 0, currentCard); 
+            reviewQueue.splice(currentQueueIndex + 5, 0, currentCard); // Re-insert 5 places later
         }
-        saveDB(); // Sauvegarde en temps réel
+        saveDB();
     }
 
     cardsReviewedCount++;
     currentQueueIndex++;
     
-    // Boucle infinie : si on arrive à la fin, on remet toutes les cartes
     if (currentQueueIndex >= reviewQueue.length) {
         let pool = [];
-        if (reviewMode === 'global') {
-            db.folders.forEach(f => pool.push(...f.cards));
-        } else {
-            const folder = db.folders.find(f => f.id === currentFolderId);
-            pool = [...folder.cards];
-        }
+        if (reviewMode === 'global') db.folders.forEach(f => pool.push(...f.cards));
+        else pool = [...db.folders.find(f => f.id === currentFolderId).cards];
         reviewQueue = reviewQueue.concat(pool.sort(() => Math.random() - 0.5));
     }
 
-    // Animation de transition
     const fc = document.getElementById('flashcard');
     fc.style.transform = isCorrect ? 'translateX(100vw) rotateY(180deg)' : 'translateX(-100vw) rotateY(180deg)';
-    
-    setTimeout(() => {
-        loadCardToUI();
-    }, 300);
+    setTimeout(loadCardToUI, 300);
 }
 
-// --- SWIPE TACTILE ---
 const flashcard = document.getElementById('flashcard');
-
 flashcard.addEventListener('touchstart', e => {
     if (!flashcard.classList.contains('is-flipped')) return;
     touchStartX = e.changedTouches[0].screenX;
 });
-
 flashcard.addEventListener('touchmove', e => {
     if (!flashcard.classList.contains('is-flipped')) return;
-    const currentX = e.changedTouches[0].screenX;
-    const diff = currentX - touchStartX;
-    
+    const diff = e.changedTouches[0].screenX - touchStartX;
     flashcard.style.transform = `rotateY(180deg) translateX(${diff}px) rotateZ(${diff * 0.05}deg)`;
     
-    if (diff > 50) {
-        flashcard.classList.add('swipe-right-preview');
-        flashcard.classList.remove('swipe-left-preview');
-    } else if (diff < -50) {
-        flashcard.classList.add('swipe-left-preview');
-        flashcard.classList.remove('swipe-right-preview');
-    } else {
-        flashcard.classList.remove('swipe-right-preview', 'swipe-left-preview');
-    }
+    if (diff > 50) flashcard.classList.add('swipe-right-preview'), flashcard.classList.remove('swipe-left-preview');
+    else if (diff < -50) flashcard.classList.add('swipe-left-preview'), flashcard.classList.remove('swipe-right-preview');
+    else flashcard.classList.remove('swipe-right-preview', 'swipe-left-preview');
 });
-
 flashcard.addEventListener('touchend', e => {
     if (!flashcard.classList.contains('is-flipped')) return;
-    touchEndX = e.changedTouches[0].screenX;
-    const diff = touchEndX - touchStartX;
-
+    const diff = e.changedTouches[0].screenX - touchStartX;
     flashcard.classList.remove('swipe-right-preview', 'swipe-left-preview');
-
-    if (diff > 100) {
-        handleAnswer(true);
-    } else if (diff < -100) {
-        handleAnswer(false);
-    } else {
-        flashcard.style.transform = 'rotateY(180deg)';
-    }
+    if (diff > 100) handleAnswer(true);
+    else if (diff < -100) handleAnswer(false);
+    else flashcard.style.transform = 'rotateY(180deg)';
 });
 
-// Init
 renderFolders();
