@@ -3,78 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flashcards</title>
+    <title>Flashcards - Entraînement</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- VUE ACCUEIL (Dossiers) -->
-    <div id="view-home" class="view active">
-        <div class="header-top">
-            <h1>Mes Dossiers</h1>
-            <button class="btn-header" onclick="document.getElementById('import-file').click()">Importer</button>
+    <!-- ONGLET 1 : ACCUEIL -->
+    <div id="tab-accueil" class="view active">
+        <h1 class="page-title">Entraînement</h1>
+        
+        <div class="card">
+            <h2 class="card-title">Session Générale</h2>
+            <div class="card-subtitle">Dossier / Sous-dossier</div>
+            <select id="select-session-folder" class="select-input">
+                <option value="global">Toutes les matières (Mélange général)</option>
+                <!-- Les dossiers s'ajouteront ici -->
+            </select>
+
+            <div class="card-subtitle">Mode de jeu</div>
+            <select class="select-input" disabled>
+                <option>Mode Entraînement (Boucle infinie)</option>
+            </select>
+
+            <div class="card-subtitle">Nombre de questions</div>
+            <div class="select-input" style="color: var(--text-muted);">
+                Illimité (Jusqu'à fermeture)
+            </div>
+
+            <button class="btn-primary mt-4" onclick="startSession()">DÉMARRER LA SESSION</button>
+        </div>
+
+        <div class="card mt-4">
+            <h2 class="card-title">Révision Personnalisée</h2>
+            <button class="btn-outline w-100 mt-2">⏳ Plus anciens</button>
+            <button class="btn-outline w-100 mt-2">📉 Pires statistiques</button>
+        </div>
+    </div>
+
+    <!-- ONGLET 2 : DOSSIERS -->
+    <div id="tab-dossiers" class="view">
+        <h1 class="page-title">Mes Dossiers</h1>
+        <div class="text-link mb-3" onclick="createFolder()">+ Nouveau dossier</div>
+        
+        <div class="card p-0" id="folders-container">
+            <!-- La liste des dossiers s'affichera ici -->
+        </div>
+    </div>
+
+    <!-- ONGLET 3 : CRÉER -->
+    <div id="tab-creer" class="view">
+        <div class="card mb-4">
+            <h2 class="card-title mb-3">Nouvelle Flashcard</h2>
+            
+            <div class="card-subtitle">Ajouter dans :</div>
+            <select id="select-create-folder" class="select-input mb-4"></select>
+
+            <div class="card-subtitle">Image Recto (Optionnel)</div>
+            <input type="file" id="card-image-input" accept="image/*" class="select-input mb-3" style="padding: 10px;">
+
+            <div class="card-subtitle">Recto (Question / Concept)</div>
+            <textarea id="card-q-input" class="textarea-input mb-3" rows="2" dir="auto" placeholder="Ex: Cœur / בoker..."></textarea>
+
+            <div class="card-subtitle">Verso (Réponse)</div>
+            <textarea id="card-a-input" class="textarea-input mb-4" rows="3" dir="auto" placeholder="Ex: Organe musculaire..."></textarea>
+
+            <button class="btn-primary" onclick="saveManualCard()">ENREGISTRER LA FLASHCARD</button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Ajout Rapide</h2>
+            <div class="card-subtitle">Format par ligne : Recto | Verso</div>
+            <p class="help-text">Exemple :<br>Bonjour | Shalom<br>Fémur | Os long de la cuisse</p>
+            
+            <textarea id="express-textarea" class="textarea-input mb-3" rows="6" dir="auto" placeholder="Concept 1 | Réponse 1&#10;Concept 2 | Réponse 2"></textarea>
+            
+            <button class="btn-primary" onclick="saveExpressCards()">AJOUTER LES CARTES</button>
+        </div>
+    </div>
+
+    <!-- ONGLET 4 : RÉGLAGES -->
+    <div id="tab-reglages" class="view">
+        <h1 class="page-title">Paramètres</h1>
+        
+        <div class="card">
+            <h2 class="card-title mb-3">Partage & Sauvegarde</h2>
+            <button class="btn-outline w-100 mb-2" onclick="exportData()">💾 Exporter (Sauvegarde complète)</button>
+            <button class="btn-outline w-100 mb-2" onclick="document.getElementById('import-file').click()">📥 Importer un fichier</button>
             <input type="file" id="import-file" style="display:none" accept=".json" onchange="importData(event)">
         </div>
-        <button class="btn btn-card" onclick="createFolder()">+ Nouveau Dossier</button>
-        <button class="btn btn-accent" onclick="startReview('global')">Révision Globale</button>
-        
-        <div id="folders-list"></div>
+
+        <div class="card mt-4">
+            <h2 class="card-title mb-3">Réinitialisation</h2>
+            <button class="btn-danger w-100" onclick="resetData()">Effacer toutes les données</button>
+        </div>
+
+        <div class="card mt-4">
+            <h2 class="card-title">Comment ça marche ?</h2>
+            <p class="help-text mt-2">
+                <strong>Boucle infinie :</strong> La session ne s'arrête que lorsque tu la quittes.<br><br>
+                <strong>Système d'erreurs :</strong> Si tu as faux (swipe à gauche), la carte reviendra automatiquement 5 places plus tard pour forcer la mémorisation.<br><br>
+                <strong>Import Rapide :</strong> Utilise le séparateur "|" pour créer des listes entières d'un coup.
+            </p>
+        </div>
     </div>
 
-    <!-- VUE CONTENU DU DOSSIER -->
-    <div id="view-folder" class="view">
-        <div class="header-top">
-            <h1 id="current-folder-title">Dossier</h1>
-            <button class="btn-header" onclick="switchView('view-home')">Retour</button>
-        </div>
-        <button class="btn btn-card" onclick="showCreateView('manual')">+ Créer une Flashcard (Manuel)</button>
-        <button class="btn btn-card" onclick="showCreateView('express')">⚡ Import Rapide en Masse</button>
-        <button class="btn btn-accent" style="background: var(--success);" onclick="startReview('folder')">Réviser ce dossier</button>
-        
-        <div id="cards-list"></div>
-    </div>
-
-    <!-- VUE CRÉATION MANUELLE -->
-    <div id="view-create-manual" class="view">
-        <div class="header-top">
-            <h1>Création Manuelle</h1>
-            <button class="btn-header" onclick="openFolder(currentFolderId)">Annuler</button>
-        </div>
-        <div class="input-group">
-            <label>Image Recto (Optionnel - Schéma, etc.)</label>
-            <input type="file" id="card-image-input" accept="image/*">
-        </div>
-        <div class="input-group">
-            <label>Recto (Question / Mot)</label>
-            <textarea id="card-q-input" dir="auto" rows="3" placeholder="Ex: Cœur / בoker..."></textarea>
-        </div>
-        <div class="input-group">
-            <label>Verso (Réponse)</label>
-            <textarea id="card-a-input" dir="auto" rows="3" placeholder="Ex: Organe musculaire..."></textarea>
-        </div>
-        <button class="btn btn-accent" onclick="saveManualCard()">Enregistrer la carte</button>
-    </div>
-
-    <!-- VUE CRÉATION / IMPORT RAPIDE -->
-    <div id="view-create-express" class="view">
-        <div class="header-top">
-            <h1>Import Rapide</h1>
-            <button class="btn-header" onclick="openFolder(currentFolderId)">Annuler</button>
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">
-            Colle ta liste au format <strong>Recto | Verso</strong> (une carte par ligne).<br>
-            Exemple : <br><em>Bonjour | Shalom</em>
-        </p>
-        <div class="input-group">
-            <textarea id="express-textarea" rows="10" placeholder="Recto 1 | Verso 1&#10;Recto 2 | Verso 2"></textarea>
-        </div>
-        <button class="btn btn-accent" onclick="saveExpressCards()">Ajouter les cartes</button>
-    </div>
-
-    <!-- VUE RÉVISION (Plein écran) -->
+    <!-- MOTEUR DE RÉVISION (Plein écran) -->
     <div id="view-review" class="view-fullscreen">
         <div class="review-header">
-            <button class="btn-close" onclick="openFolder(currentFolderId)">Fermer ✕</button>
+            <button class="btn-close" onclick="closeReview()">Fermer ✕</button>
             <div class="review-stats" id="review-progress">Vues : 0</div>
         </div>
         
@@ -97,15 +133,23 @@
         </div>
     </div>
 
-    <!-- TAB BAR -->
+    <!-- BARRE DE NAVIGATION (Tab Bar) -->
     <nav class="tab-bar">
-        <div class="tab-item active" onclick="switchView('view-home')">
+        <div class="tab-item active" onclick="switchTab('tab-accueil', this)">
             <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            Dossiers
+            <span>Accueil</span>
         </div>
-        <div class="tab-item" onclick="exportData()">
-            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            Sauvegarde
+        <div class="tab-item" onclick="switchTab('tab-dossiers', this)">
+            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Dossiers</span>
+        </div>
+        <div class="tab-item" onclick="switchTab('tab-creer', this)">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Créer</span>
+        </div>
+        <div class="tab-item" onclick="switchTab('tab-reglages', this)">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22l-1.92 3.32c-.12.21-.07.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <span>Réglages</span>
         </div>
     </nav>
 
