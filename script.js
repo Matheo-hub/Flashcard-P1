@@ -188,10 +188,20 @@ function importData(event) {
             try {
                 const importedDB = JSON.parse(e.target.result);
                 if (importedDB && importedDB.folders) {
-                    db = importedDB;
+                    
+                    // On parcourt les dossiers importés pour les ajouter
+                    importedDB.folders.forEach(importedFolder => {
+                        // On génère de nouveaux ID pour éviter les bugs
+                        importedFolder.id = Date.now() + Math.random(); 
+                        importedFolder.cards.forEach(card => card.id = Date.now() + Math.random());
+                        
+                        // On ajoute le dossier à ta base de données actuelle
+                        db.folders.push(importedFolder);
+                    });
+                    
                     saveDB();
                     renderFolders();
-                    alert("Sauvegarde importée avec succès !");
+                    alert("Les cartes ont été ajoutées avec succès à tes dossiers !");
                 }
             } catch (err) {
                 alert("Erreur lors de l'importation. Fichier invalide.");
@@ -277,7 +287,7 @@ function handleAnswer(isCorrect) {
             realCard.correct++;
         } else {
             realCard.wrong++;
-            // L'astuce magique : si c'est faux, on insère une copie de cette carte 5 positions plus loin !
+            // Insérer une copie de cette carte 5 positions plus loin !
             const insertIndex = currentQueueIndex + 5;
             reviewQueue.splice(insertIndex, 0, currentCard); 
         }
@@ -287,7 +297,7 @@ function handleAnswer(isCorrect) {
     cardsReviewedCount++;
     currentQueueIndex++;
     
-    // Boucle infinie : si on arrive à la fin de la file d'attente, on remet toutes les cartes du paquet mélangées
+    // Boucle infinie : si on arrive à la fin, on remet toutes les cartes
     if (currentQueueIndex >= reviewQueue.length) {
         let pool = [];
         if (reviewMode === 'global') {
@@ -296,7 +306,6 @@ function handleAnswer(isCorrect) {
             const folder = db.folders.find(f => f.id === currentFolderId);
             pool = [...folder.cards];
         }
-        // Ajout du pool mélangé à la fin de la file d'attente
         reviewQueue = reviewQueue.concat(pool.sort(() => Math.random() - 0.5));
     }
 
