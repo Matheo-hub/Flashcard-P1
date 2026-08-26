@@ -3,85 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mes Flashcards</title>
+    <title>Flashcards</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <button class="btn-nav" id="btn-back" style="display: none;" onclick="goBack()">Retour</button>
-        <span id="app-title">Mes Flashcards</span>
-        <button class="btn-nav" id="btn-stats" onclick="document.getElementById('import-file').click()">Importer</button>
-        <input type="file" id="import-file" style="display:none" accept=".json" onchange="importData(event)">
-    </header>
-
-    <main>
-        <!-- VUE ACCUEIL (Dossiers et Export) -->
-        <div id="view-home" class="view active">
-            <div class="actions-row">
-                <button class="btn-primary" onclick="createFolder()">+ Nouveau Dossier</button>
-                <button class="btn-secondary" onclick="exportData()">Exporter (Sauvegarde)</button>
-            </div>
-            <button class="btn-primary" style="background-color: var(--text-main);" onclick="startReview('global')">Révision Globale (Tous les dossiers)</button>
-            
-            <h3 class="section-title">Mes Dossiers</h3>
-            <div id="folders-list" class="list-container">
-                <!-- Les dossiers s'afficheront ici -->
-            </div>
+    <!-- VUE ACCUEIL (Dossiers) -->
+    <div id="view-home" class="view active">
+        <div class="header-top">
+            <h1>Mes Dossiers</h1>
+            <button class="btn-header" onclick="document.getElementById('import-file').click()">Importer</button>
+            <input type="file" id="import-file" style="display:none" accept=".json" onchange="importData(event)">
         </div>
+        <button class="btn btn-card" onclick="createFolder()">+ Nouveau Dossier</button>
+        <button class="btn btn-accent" onclick="startReview('global')">Révision Globale</button>
+        
+        <div id="folders-list"></div>
+    </div>
 
-        <!-- VUE DOSSIER (Contenu d'un dossier) -->
-        <div id="view-folder" class="view">
-            <h2 id="current-folder-title" class="section-title">Titre du dossier</h2>
-            <div class="actions-row">
-                <button class="btn-primary" onclick="showCreateView()">+ Ajouter Flashcard</button>
-                <button class="btn-primary" style="background-color: var(--success);" onclick="startReview('folder')">Réviser ce dossier</button>
-            </div>
-            <div id="cards-list" class="list-container">
-                <!-- Les cartes du dossier s'afficheront ici -->
-            </div>
+    <!-- VUE CONTENU DU DOSSIER -->
+    <div id="view-folder" class="view">
+        <div class="header-top">
+            <h1 id="current-folder-title">Dossier</h1>
+            <button class="btn-header" onclick="switchView('view-home')">Retour</button>
         </div>
+        <button class="btn btn-card" onclick="showCreateView('manual')">+ Créer une Flashcard (Manuel)</button>
+        <button class="btn btn-card" onclick="showCreateView('express')">⚡ Import Rapide en Masse</button>
+        <button class="btn btn-accent" style="background: var(--success);" onclick="startReview('folder')">Réviser ce dossier</button>
+        
+        <div id="cards-list"></div>
+    </div>
 
-        <!-- VUE CRÉATION MANUELLE (Recto/Verso avec image) -->
-        <div id="view-create" class="view">
-            <div class="input-group">
-                <label>Image Recto (Optionnel - Schémas, photos...)</label>
-                <input type="file" id="card-image-input" accept="image/*">
-            </div>
-            <div class="input-group">
-                <textarea id="card-q-input" dir="auto" rows="3" placeholder="Question ou mot à traduire..."></textarea>
-            </div>
-            <div class="input-group">
-                <textarea id="card-a-input" dir="auto" rows="3" placeholder="Réponse / Verso"></textarea>
-            </div>
-            <button class="btn-primary" onclick="saveCard()">Sauvegarder la carte</button>
+    <!-- VUE CRÉATION MANUELLE -->
+    <div id="view-create-manual" class="view">
+        <div class="header-top">
+            <h1>Création Manuelle</h1>
+            <button class="btn-header" onclick="openFolder(currentFolderId)">Annuler</button>
         </div>
+        <div class="input-group">
+            <label>Image Recto (Optionnel - Schéma, etc.)</label>
+            <input type="file" id="card-image-input" accept="image/*">
+        </div>
+        <div class="input-group">
+            <label>Recto (Question / Mot)</label>
+            <textarea id="card-q-input" dir="auto" rows="3" placeholder="Ex: Cœur / בoker..."></textarea>
+        </div>
+        <div class="input-group">
+            <label>Verso (Réponse)</label>
+            <textarea id="card-a-input" dir="auto" rows="3" placeholder="Ex: Organe musculaire..."></textarea>
+        </div>
+        <button class="btn btn-accent" onclick="saveManualCard()">Enregistrer la carte</button>
+    </div>
 
-        <!-- VUE RÉVISION (Boucle infinie et Swipe) -->
-        <div id="view-review" class="view">
-            <div class="stats-live" id="review-progress">Cartes vues : 0</div>
-            
-            <div class="card-container" id="card-container">
-                <div class="flashcard" id="flashcard">
-                    <!-- Face Recto -->
-                    <div class="card-face card-front">
-                        <img id="view-q-img" class="card-image" style="display:none;">
-                        <div id="view-q-text" class="card-text">Question</div>
-                    </div>
-                    <!-- Face Verso -->
-                    <div class="card-face card-back">
-                        <div id="view-q-reminder" class="q-reminder">Rappel question</div>
-                        <div id="view-a-text" class="a-reveal" dir="auto">Réponse</div>
-                    </div>
+    <!-- VUE CRÉATION / IMPORT RAPIDE -->
+    <div id="view-create-express" class="view">
+        <div class="header-top">
+            <h1>Import Rapide</h1>
+            <button class="btn-header" onclick="openFolder(currentFolderId)">Annuler</button>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">
+            Colle ta liste au format <strong>Recto | Verso</strong> (une carte par ligne).<br>
+            Exemple : <br><em>Bonjour | Shalom</em>
+        </p>
+        <div class="input-group">
+            <textarea id="express-textarea" rows="10" placeholder="Recto 1 | Verso 1&#10;Recto 2 | Verso 2"></textarea>
+        </div>
+        <button class="btn btn-accent" onclick="saveExpressCards()">Ajouter les cartes</button>
+    </div>
+
+    <!-- VUE RÉVISION (Plein écran) -->
+    <div id="view-review" class="view-fullscreen">
+        <div class="review-header">
+            <button class="btn-close" onclick="openFolder(currentFolderId)">Fermer ✕</button>
+            <div class="review-stats" id="review-progress">Vues : 0</div>
+        </div>
+        
+        <div class="card-container" id="card-container">
+            <div class="flashcard" id="flashcard">
+                <div class="card-face card-front">
+                    <img id="view-q-img" class="card-image" style="display:none;">
+                    <div id="view-q-text" class="card-text">Question</div>
+                </div>
+                <div class="card-face card-back">
+                    <div id="view-q-reminder" class="q-reminder"></div>
+                    <div id="view-a-text" class="a-reveal" dir="auto">Réponse</div>
                 </div>
             </div>
-
-            <div class="controls" id="review-controls">
-                <button class="btn-action btn-wrong" onclick="handleAnswer(false)">✗</button>
-                <button class="btn-action btn-right" onclick="handleAnswer(true)">✓</button>
-            </div>
         </div>
-    </main>
+
+        <div class="controls" id="review-controls">
+            <button class="btn-action btn-wrong" onclick="handleAnswer(false)">✗</button>
+            <button class="btn-action btn-right" onclick="handleAnswer(true)">✓</button>
+        </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <nav class="tab-bar">
+        <div class="tab-item active" onclick="switchView('view-home')">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Dossiers
+        </div>
+        <div class="tab-item" onclick="exportData()">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Sauvegarde
+        </div>
+    </nav>
 
     <script src="script.js"></script>
 </body>
