@@ -1,0 +1,76 @@
+:root {
+    --bg-color: #f4f7f6;
+    --card-bg: #ffffff;
+    --text-main: #2d3436;
+    --text-muted: #636e72;
+    --primary: #0984e3;
+    --secondary: #6c5ce7;
+    --success: #00b894;
+    --danger: #d63031;
+    --shadow: 0 10px 20px rgba(0,0,0,0.08);
+    --border-radius: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+
+header { padding: 20px; text-align: center; background: var(--card-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.05); font-size: 1.2rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+
+.btn-nav { background: none; border: none; color: var(--primary); font-size: 1rem; font-weight: 600; cursor: pointer; }
+
+main { flex: 1; padding: 20px; display: flex; flex-direction: column; width: 100%; max-width: 600px; margin: 0 auto; }
+
+/* --- Vues --- */
+.view { display: none; width: 100%; flex-direction: column; }
+.view.active { display: flex; }
+
+/* --- Boutons et UI --- */
+.actions-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.btn-primary, .btn-secondary { color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.1s; }
+.btn-primary { background-color: var(--primary); margin-bottom: 10px; }
+.btn-secondary { background-color: var(--secondary); }
+.btn-primary:active, .btn-secondary:active { transform: scale(0.98); }
+
+.section-title { margin: 20px 0 10px; font-size: 1.2rem; color: var(--text-muted); }
+
+/* --- Listes Dossiers et Cartes --- */
+.list-container { display: flex; flex-direction: column; gap: 10px; }
+.list-item { background: var(--card-bg); padding: 15px 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.list-item:active { background: #fdfdfd; }
+.item-info h4 { margin-bottom: 5px; }
+.item-stats { font-size: 0.85rem; color: var(--text-muted); }
+.btn-delete { background: none; border: none; color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 5px; }
+
+/* --- Formulaires --- */
+.input-group { margin-bottom: 15px; width: 100%; }
+textarea, input[type="text"], input[type="file"] { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #dfe6e9; font-size: 1rem; background: var(--card-bg); resize: vertical; }
+
+/* --- Mode Révision --- */
+.stats-live { text-align: center; margin-bottom: 15px; font-weight: bold; color: var(--text-muted); }
+
+.card-container { perspective: 1000px; width: 100%; height: 450px; margin-bottom: 30px; position: relative; }
+
+.flashcard { width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1), box-shadow 0.3s, border 0.3s; cursor: pointer; border-radius: var(--border-radius); box-shadow: var(--shadow); border: 4px solid transparent; }
+.flashcard.is-flipped { transform: rotateY(180deg); }
+
+/* Effets de swipe visuels */
+.flashcard.swipe-right-preview { border-color: var(--success); box-shadow: 0 10px 30px rgba(0, 184, 148, 0.3); }
+.flashcard.swipe-left-preview { border-color: var(--danger); box-shadow: 0 10px 30px rgba(214, 48, 49, 0.3); }
+
+.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: var(--card-bg); border-radius: var(--border-radius); padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow-y: auto; }
+.card-back { transform: rotateY(180deg); justify-content: flex-start; }
+
+.card-image { max-width: 100%; max-height: 200px; border-radius: 10px; margin-bottom: 15px; object-fit: contain; }
+.card-text { font-size: 1.5rem; font-weight: 600; }
+
+.card-back .q-reminder { font-size: 1rem; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #dfe6e9; width: 100%; }
+.card-back .a-reveal { font-size: 1.5rem; font-weight: 600; color: var(--primary); flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+.controls { display: flex; justify-content: space-around; width: 100%; opacity: 0; pointer-events: none; transition: opacity 0.3s; margin-bottom: 20px; }
+.controls.visible { opacity: 1; pointer-events: auto; }
+
+.btn-action { width: 75px; height: 75px; border-radius: 50%; border: none; font-size: 2.2rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: var(--shadow); background: var(--card-bg); transition: transform 0.1s; }
+.btn-action:active { transform: scale(0.9); }
+.btn-wrong { color: var(--danger); border: 2px solid var(--danger); }
+.btn-right { color: var(--success); border: 2px solid var(--success); }
