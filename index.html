@@ -3,40 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flashcards - Entraînement</title>
+    <title>Flashcards P1</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <!-- ONGLET 1 : ACCUEIL -->
     <div id="tab-accueil" class="view active">
-        <h1 class="page-title">Entraînement</h1>
+        <h1 class="page-title">Entraînement P1</h1>
         
-        <div class="card">
-            <h2 class="card-title">Session Générale</h2>
+        <div class="card mb-4">
+            <h2 class="card-title mb-3">Session Générale</h2>
+            
             <div class="card-subtitle">Dossier / Sous-dossier</div>
-            <select id="select-session-folder" class="select-input">
+            <select id="select-session-folder" class="select-input mb-3">
                 <option value="global">Toutes les matières (Mélange général)</option>
-                <!-- Les dossiers s'ajouteront ici -->
             </select>
 
             <div class="card-subtitle">Mode de jeu</div>
-            <select class="select-input" disabled>
+            <select class="select-input mb-3" disabled>
                 <option>Mode Entraînement (Boucle infinie)</option>
             </select>
 
-            <div class="card-subtitle">Nombre de questions</div>
-            <div class="select-input" style="color: var(--text-muted);">
-                Illimité (Jusqu'à fermeture)
-            </div>
+            <div class="card-subtitle">Nombre de questions (Examen)</div>
+            <div class="input-disabled mb-4">Illimité</div>
 
-            <button class="btn-primary mt-4" onclick="startSession()">DÉMARRER LA SESSION</button>
+            <button class="btn-primary" onclick="startSession()">DÉMARRER LA SESSION</button>
         </div>
 
-        <div class="card mt-4">
-            <h2 class="card-title">Révision Personnalisée</h2>
-            <button class="btn-outline w-100 mt-2">⏳ Plus anciens</button>
-            <button class="btn-outline w-100 mt-2">📉 Pires statistiques</button>
+        <div class="card">
+            <h2 class="card-title mb-3">Révision Personnalisée</h2>
+            <button class="btn-outline w-100 mb-2" onclick="alert('Fonctionnalité à venir !')">⏳ Plus anciens</button>
+            <button class="btn-outline w-100" onclick="alert('Fonctionnalité à venir !')">📉 Pires statistiques</button>
         </div>
     </div>
 
@@ -44,38 +42,39 @@
     <div id="tab-dossiers" class="view">
         <h1 class="page-title">Mes Dossiers</h1>
         <div class="text-link mb-3" onclick="createFolder()">+ Nouveau dossier</div>
-        
         <div class="card p-0" id="folders-container">
-            <!-- La liste des dossiers s'affichera ici -->
+            <!-- Injecté via JS -->
         </div>
     </div>
 
     <!-- ONGLET 3 : CRÉER -->
     <div id="tab-creer" class="view">
         <div class="card mb-4">
-            <h2 class="card-title mb-3">Nouvelle Flashcard</h2>
+            <h2 class="card-title mb-3">Ajout Classique</h2>
             
-            <div class="card-subtitle">Ajouter dans :</div>
+            <div class="card-subtitle">Dossier cible</div>
             <select id="select-create-folder" class="select-input mb-4"></select>
 
+            <div class="card-subtitle">Question (Recto)</div>
+            <textarea id="card-q-input" class="textarea-input mb-3" rows="2" dir="auto" placeholder="Intitulé de la question..."></textarea>
+
+            <div class="card-subtitle">Réponse (Verso)</div>
+            <textarea id="card-a-input" class="textarea-input mb-3" rows="3" dir="auto" placeholder="La réponse attendue..."></textarea>
+
             <div class="card-subtitle">Image Recto (Optionnel)</div>
-            <input type="file" id="card-image-input" accept="image/*" class="select-input mb-3" style="padding: 10px;">
+            <input type="file" id="card-image-input" accept="image/*" class="file-input mb-4">
 
-            <div class="card-subtitle">Recto (Question / Concept)</div>
-            <textarea id="card-q-input" class="textarea-input mb-3" rows="2" dir="auto" placeholder="Ex: Cœur / בoker..."></textarea>
-
-            <div class="card-subtitle">Verso (Réponse)</div>
-            <textarea id="card-a-input" class="textarea-input mb-4" rows="3" dir="auto" placeholder="Ex: Organe musculaire..."></textarea>
-
-            <button class="btn-primary" onclick="saveManualCard()">ENREGISTRER LA FLASHCARD</button>
+            <button class="btn-primary" onclick="saveManualCard()">ENREGISTRER LA CARTE</button>
         </div>
 
-        <div class="card">
-            <h2 class="card-title">Ajout Rapide</h2>
-            <div class="card-subtitle">Format par ligne : Recto | Verso</div>
-            <p class="help-text">Exemple :<br>Bonjour | Shalom<br>Fémur | Os long de la cuisse</p>
+        <div class="card mb-4">
+            <h2 class="card-title mb-3">Ajout Rapide</h2>
             
-            <textarea id="express-textarea" class="textarea-input mb-3" rows="6" dir="auto" placeholder="Concept 1 | Réponse 1&#10;Concept 2 | Réponse 2"></textarea>
+            <div class="card-subtitle">Ajouter dans :</div>
+            <select id="select-express-folder" class="select-input mb-3"></select>
+            
+            <div class="card-subtitle mb-2">Format par ligne :<br><span style="font-size: 0.8rem; color: var(--text-muted);">Question | Réponse</span></div>
+            <textarea id="express-textarea" class="textarea-input mb-3" rows="6" dir="auto" placeholder="L'os fémur est : | Un os long de la cuisse&#10;La glycine | Acide aminé le plus simple"></textarea>
             
             <button class="btn-primary" onclick="saveExpressCards()">AJOUTER LES CARTES</button>
         </div>
@@ -85,58 +84,73 @@
     <div id="tab-reglages" class="view">
         <h1 class="page-title">Paramètres</h1>
         
-        <div class="card">
+        <div class="card mb-4">
             <h2 class="card-title mb-3">Partage & Sauvegarde</h2>
-            <button class="btn-outline w-100 mb-2" onclick="exportData()">💾 Exporter (Sauvegarde complète)</button>
-            <button class="btn-outline w-100 mb-2" onclick="document.getElementById('import-file').click()">📥 Importer un fichier</button>
+            <button class="btn-outline w-100 mb-3" onclick="exportData(true)">💾 Exporter (Sauvegarde complète)</button>
+            <button class="btn-outline w-100 mb-3" onclick="exportData(false)">📤 Exporter (Partage ami - sans stats)</button>
+            <button class="btn-outline w-100" onclick="document.getElementById('import-file').click()">📥 Importer un fichier</button>
             <input type="file" id="import-file" style="display:none" accept=".json" onchange="importData(event)">
         </div>
 
-        <div class="card mt-4">
+        <div class="card mb-4">
             <h2 class="card-title mb-3">Réinitialisation</h2>
             <button class="btn-danger w-100" onclick="resetData()">Effacer toutes les données</button>
         </div>
 
-        <div class="card mt-4">
-            <h2 class="card-title">Comment ça marche ?</h2>
-            <p class="help-text mt-2">
-                <strong>Boucle infinie :</strong> La session ne s'arrête que lorsque tu la quittes.<br><br>
-                <strong>Système d'erreurs :</strong> Si tu as faux (swipe à gauche), la carte reviendra automatiquement 5 places plus tard pour forcer la mémorisation.<br><br>
-                <strong>Import Rapide :</strong> Utilise le séparateur "|" pour créer des listes entières d'un coup.
+        <div class="card mb-4">
+            <h2 class="card-title mb-3">Comment ça marche ?</h2>
+            <p class="help-text">
+                <strong>Dossiers :</strong> Clique sur un dossier pour le dérouler. Utilise le bouton "Modifier" pour changer son nom.<br><br>
+                <strong>Boucle infinie :</strong> La session continue de te proposer des cartes jusqu'à ce que tu la quittes avec la croix.<br><br>
+                <strong>Répétition :</strong> Si tu as faux à une carte, elle reviendra automatiquement un peu plus tard dans ta pile pour te forcer à la retenir.
             </p>
         </div>
     </div>
 
-    <!-- MOTEUR DE RÉVISION (Plein écran) -->
+    <!-- MOTEUR DE RÉVISION (Plein Écran - Design exact de la vidéo) -->
     <div id="view-review" class="view-fullscreen">
-        <div class="review-header">
-            <button class="btn-close" onclick="closeReview()">Fermer ✕</button>
-            <div class="review-stats" id="review-progress">Vues : 0</div>
+        <div class="review-topbar">
+            <div class="badge-repetition">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px; vertical-align: middle;"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                Répétition
+            </div>
+            <div class="review-progress" id="review-counter">1/10</div>
+            <div class="review-timer" id="review-timer">00:00</div>
+            <button class="btn-close-review" onclick="closeReview()">✕</button>
         </div>
         
         <div class="card-container" id="card-container">
             <div class="flashcard" id="flashcard">
+                
+                <!-- RECTO -->
                 <div class="card-face card-front">
+                    <div class="card-label">QUESTION</div>
                     <img id="view-q-img" class="card-image" style="display:none;">
-                    <div id="view-q-text" class="card-text">Question</div>
+                    <div id="view-q-text" class="card-text">Chargement...</div>
+                    <button class="btn-reveal" id="btn-reveal" onclick="revealAnswer()">Voir la réponse<br><span style="font-size: 0.7rem; font-weight: normal; opacity: 0.7;">ou appuyez sur Espace</span></button>
                 </div>
+                
+                <!-- VERSO -->
                 <div class="card-face card-back">
-                    <div id="view-q-reminder" class="q-reminder"></div>
-                    <div id="view-a-text" class="a-reveal" dir="auto">Réponse</div>
+                    <div class="card-label">QUESTION</div>
+                    <div id="view-q-reminder" class="q-reminder">Chargement...</div>
+                    <img id="view-a-img" class="card-image" style="display:none;">
+                    <div id="view-a-text" class="a-reveal" dir="auto">Réponse...</div>
                 </div>
+
             </div>
         </div>
 
         <div class="controls" id="review-controls">
-            <button class="btn-action btn-wrong" onclick="handleAnswer(false)">✗</button>
-            <button class="btn-action btn-right" onclick="handleAnswer(true)">✓</button>
+            <button class="btn-action btn-wrong" onclick="handleAnswer(false)">À revoir</button>
+            <button class="btn-action btn-right" onclick="handleAnswer(true)">Acquis</button>
         </div>
     </div>
 
-    <!-- BARRE DE NAVIGATION (Tab Bar) -->
+    <!-- TAB BAR NAVIGATION -->
     <nav class="tab-bar">
         <div class="tab-item active" onclick="switchTab('tab-accueil', this)">
-            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <span>Accueil</span>
         </div>
         <div class="tab-item" onclick="switchTab('tab-dossiers', this)">
@@ -144,11 +158,11 @@
             <span>Dossiers</span>
         </div>
         <div class="tab-item" onclick="switchTab('tab-creer', this)">
-            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             <span>Créer</span>
         </div>
         <div class="tab-item" onclick="switchTab('tab-reglages', this)">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22l-1.92 3.32c-.12.21-.07.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Réglages</span>
         </div>
     </nav>
