@@ -1,6 +1,7 @@
 :root {
-    --bg-color: #0f172a;
-    --card-bg: #1e293b;
+    --bg-color: #0b1320;
+    --card-bg: #172136;
+    --card-border: #25334d;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --accent: #0ea5e9;
@@ -8,43 +9,60 @@
     --success: #10b981;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 75px; overflow-x: hidden; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
 
-/* Tab Bar */
-.tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
-.tab-item { color: var(--text-muted); text-align: center; font-size: 0.75rem; cursor: pointer; flex: 1; }
-.tab-item.active { color: var(--accent); }
-.tab-item svg { display: block; margin: 0 auto 4px; height: 24px; fill: currentColor; }
+/* Utilities */
+.w-100 { width: 100%; }
+.mt-2 { margin-top: 10px; }
+.mt-3 { margin-top: 15px; }
+.mt-4 { margin-top: 20px; }
+.mb-2 { margin-bottom: 10px; }
+.mb-3 { margin-bottom: 15px; }
+.mb-4 { margin-bottom: 20px; }
+.p-0 { padding: 0 !important; }
 
-/* Views */
+/* Typographie & Vues */
 .view { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
 .view.active { display: block; }
+.page-title { font-size: 1.7rem; font-weight: 700; margin-bottom: 20px; color: #ffffff; }
+.text-link { color: var(--accent); font-size: 1rem; cursor: pointer; display: inline-block; }
+
+/* Tab Bar (Identique aux images) */
+.tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-color); display: flex; justify-content: space-around; padding: 10px 0 20px 0; border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
+.tab-item { color: var(--text-muted); text-align: center; font-size: 0.7rem; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; }
+.tab-item.active { color: var(--accent); }
+.tab-item svg { height: 22px; fill: currentColor; margin-bottom: 4px; }
+
+/* Cartes (Le look exact de ton app) */
+.card { background: var(--card-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--card-border); }
+.card-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; }
+.card-subtitle { font-size: 0.9rem; color: var(--text-muted); margin: 15px 0 5px 0; }
+.help-text { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+
+/* Boutons */
+.btn-primary { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; }
+.btn-primary:active { opacity: 0.8; }
+.btn-outline { background: transparent; color: var(--accent); border: 2px solid var(--accent); padding: 12px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-danger { background: transparent; color: var(--danger); border: 2px solid var(--danger); padding: 12px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+
+/* Inputs (Selects & Textareas) */
+.select-input, .textarea-input { width: 100%; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--card-border); padding: 15px; border-radius: 10px; font-size: 1rem; appearance: none; }
+.select-input { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 15px center; background-size: 16px; }
+.textarea-input { resize: vertical; }
+
+/* Listes de dossiers (Type Accordéon) */
+.folder-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--card-border); cursor: pointer; }
+.folder-item:last-child { border-bottom: none; }
+.folder-info { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.folder-icon { color: var(--text-muted); }
+.folder-action { color: var(--accent); font-size: 0.9rem; }
+.card-item { padding: 12px 20px 12px 40px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted); }
+.card-item:last-child { border-bottom: none; }
+
+/* --- MOTEUR DE FLASHCARD (Plein écran) --- */
 .view-fullscreen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 100; flex-direction: column; overflow: hidden; }
 .view-fullscreen.active { display: flex; }
-
-/* Typography & Layout */
-.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-.header-top h1 { font-size: 1.5rem; font-weight: 700; }
-.btn-header { background: none; color: var(--accent); border: none; font-size: 1rem; cursor: pointer; font-weight: 600; }
-
-/* Inputs & Buttons */
-.input-group { margin-bottom: 15px; }
-.input-group label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.9rem; }
-textarea, input[type="file"] { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); font-size: 1rem; background: var(--bg-color); color: var(--text-main); resize: vertical; }
-
-.btn { width: 100%; padding: 15px; border-radius: 12px; font-size: 1rem; font-weight: 600; border: none; cursor: pointer; margin-bottom: 15px; transition: transform 0.1s; }
-.btn:active { transform: scale(0.98); }
-.btn-accent { background: var(--accent); color: white; }
-.btn-card { background: var(--card-bg); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); }
-
-/* Lists */
-.list-item { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.list-item-title { font-weight: 600; margin-bottom: 4px; }
-.list-item-stats { font-size: 0.8rem; color: var(--text-muted); }
-.btn-icon { background: none; border: none; color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 5px; }
-
-/* Flashcard Engine */
 .review-header { display: flex; justify-content: space-between; padding: 20px; align-items: center; }
 .btn-close { background: none; border: none; color: var(--text-muted); font-size: 1rem; cursor: pointer; font-weight: bold; }
 .review-stats { color: var(--accent); font-weight: 600; }
@@ -56,16 +74,16 @@ textarea, input[type="file"] { width: 100%; padding: 15px; border-radius: 12px; 
 .flashcard.swipe-right-preview { border-color: var(--success); box-shadow: 0 0 30px rgba(16, 185, 129, 0.2); }
 .flashcard.swipe-left-preview { border-color: var(--danger); box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); }
 
-.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: var(--card-bg); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px solid rgba(255,255,255,0.05); overflow-y: auto; }
+.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: var(--card-bg); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px solid var(--card-border); overflow-y: auto; }
 .card-back { transform: rotateY(180deg); justify-content: flex-start; }
 
 .card-image { max-width: 100%; max-height: 40vh; border-radius: 12px; margin-bottom: 20px; object-fit: contain; }
 .card-text { font-size: 1.4rem; font-weight: 600; color: var(--text-main); }
-.q-reminder { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); width: 100%; }
+.q-reminder { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--card-border); width: 100%; }
 .a-reveal { font-size: 1.5rem; font-weight: 600; color: var(--accent); flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
 
 .controls { display: flex; justify-content: space-evenly; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s; margin-bottom: 30px; }
 .controls.visible { opacity: 1; pointer-events: auto; }
-.btn-action { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 2rem; display: flex; justify-content: center; align-items: center; cursor: pointer; background: var(--card-bg); font-weight: bold; }
-.btn-wrong { color: var(--danger); border: 2px solid var(--danger); }
-.btn-right { color: var(--success); border: 2px solid var(--success); }
+.btn-action { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 2rem; display: flex; justify-content: center; align-items: center; cursor: pointer; background: var(--card-bg); font-weight: bold; border: 2px solid var(--card-border); color: white; }
+.btn-wrong { color: var(--danger); border-color: var(--danger); }
+.btn-right { color: var(--success); border-color: var(--success); }
