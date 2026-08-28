@@ -1,6 +1,6 @@
-let db = JSON.parse(localStorage.getItem('flashcards_db_p1')) || { folders: [] };
+let db = JSON.parse(localStorage.getItem('flashcards_db_qcm_style')) || { folders: [] };
 let currentImageBase64 = null;
-let editingCardInfo = null; // Stocke { folderId, cardId } si on modifie une carte
+let editingCardInfo = null;
 
 let reviewQueue = [];
 let currentQueueIndex = 0;
@@ -27,17 +27,11 @@ function switchTab(tabId, element) {
     if (tabId === 'tab-accueil' || tabId === 'tab-creer') updateDropdowns();
     if (tabId === 'tab-dossiers') renderFoldersList();
 
-    // Réinitialise le mode édition quand on quitte l'onglet Créer
     if (tabId !== 'tab-creer') {
         editingCardInfo = null;
         document.getElementById('create-mode-title').innerText = "Ajout Classique";
         document.getElementById('btn-save-manual').innerText = "ENREGISTRER LA CARTE";
     }
-}
-
-// --- GESTION DOSSIERS ET SOUS-DOSSIERS ---
-function saveDB() {
-    localStorage.setItem('flashcards_db_p1', JSON.stringify(db));
 }
 
 function updateDropdowns() {
@@ -48,10 +42,15 @@ function updateDropdowns() {
         el.innerHTML = id === 'select-session-folder' ? '<option value="global">Toutes les matières (Mélange général)</option>' : '';
         
         db.folders.forEach(f => {
-            const prefix = f.parentId ? "— " : ""; // Indique visuellement un sous-dossier
+            const prefix = f.parentId ? "— " : "";
             el.innerHTML += `<option value="${f.id}">${prefix}${f.name}</option>`;
         });
     });
+}
+
+// --- GESTION DES DOSSIERS ET SOUS-DOSSIERS (Style QCM) ---
+function saveDB() {
+    localStorage.setItem('flashcards_db_qcm_style', JSON.stringify(db));
 }
 
 function createFolder() {
@@ -64,7 +63,7 @@ function openFolderModal(existingId = null) {
     
     let options = `<option value="none">Aucun (Dossier principal)</option>`;
     db.folders.forEach(f => {
-        if (existingId && f.id === existingId) return; // Empêche de se mettre dans soi-même
+        if (existingId && f.id === existingId) return;
         const selected = (folder && folder.parentId === f.id) ? "selected" : "";
         options += `<option value="${f.id}" ${selected}>${f.name}</option>`;
     });
@@ -116,13 +115,11 @@ function renderFoldersList() {
         return;
     }
 
-    // Affiche d'abord les dossiers principaux, puis leurs sous-dossiers
     const rootFolders = db.folders.filter(f => !f.parentId);
-    
     rootFolders.forEach(folder => {
         renderSingleFolder(folder, container, 0);
         const children = db.folders.filter(f => f.parentId === folder.id);
-        children.forEach(child => renderSingleFolder(child, container, 20)); // Décale de 20px
+        children.forEach(child => renderSingleFolder(child, container, 20));
     });
 }
 
@@ -136,7 +133,7 @@ function renderSingleFolder(folder, container, indent) {
             <div class="folder-info" onclick="toggleFolder(${folder.id})" style="flex:1;">
                 ${icon} ${folder.name} <span style="font-size:0.9rem; color:var(--text-muted); font-weight:normal;">(${count})</span>
             </div>
-            <div class="folder-action" onclick="openFolderModal(${folder.id})">⚙️</div>
+            <div class="folder-action" onclick="openFolderModal(${folder.id})">Modifier</div>
             <div class="folder-action" onclick="deleteFolder(${folder.id}, event)" style="color:var(--danger); margin-left:15px;">✕</div>
         </div>
     `;
@@ -167,7 +164,6 @@ function toggleFolder(id) {
 function deleteFolder(id, event) {
     event.stopPropagation();
     if (confirm("Supprimer ce dossier et TOUTES ses cartes ?")) {
-        // Supprime le dossier ET ses sous-dossiers
         db.folders = db.folders.filter(f => f.id !== id && f.parentId !== id);
         saveDB(); renderFoldersList(); updateDropdowns();
     }
@@ -197,7 +193,6 @@ function editCard(folderId, cardId) {
     document.getElementById('create-mode-title').innerText = "Modifier la carte";
     document.getElementById('btn-save-manual').innerText = "METTRE À JOUR LA CARTE";
     
-    // Bascule sur l'onglet créer
     switchTab('tab-creer', document.querySelectorAll('.tab-item')[2]);
 }
 
@@ -221,11 +216,9 @@ function saveManualCard() {
     const folder = db.folders.find(f => f.id == folderId);
     
     if (editingCardInfo) {
-        // Mode Édition
         const targetFolder = db.folders.find(f => f.id == editingCardInfo.folderId);
         const cardIndex = targetFolder.cards.findIndex(c => c.id == editingCardInfo.cardId);
         
-        // Si l'utilisateur a changé le dossier cible pendant la modification
         if (editingCardInfo.folderId != folderId) {
             const cardToMove = targetFolder.cards.splice(cardIndex, 1)[0];
             cardToMove.q = q; cardToMove.a = a; cardToMove.img = currentImageBase64;
@@ -240,7 +233,6 @@ function saveManualCard() {
         document.getElementById('btn-save-manual').innerText = "ENREGISTRER LA CARTE";
         alert("Carte modifiée avec succès !");
     } else {
-        // Mode Création
         folder.cards.push({ id: Date.now(), createdAt: Date.now(), q: q, a: a, img: currentImageBase64, correct: 0, wrong: 0 });
         alert("Flashcard enregistrée !");
     }
@@ -252,6 +244,7 @@ function saveManualCard() {
     currentImageBase64 = null;
 }
 
+// Ajout Rapide avec séparateur point-virgule (;)
 function saveExpressCards() {
     const folderId = document.getElementById('select-express-folder').value;
     if (!folderId) return alert("Veuillez d'abord créer un dossier !");
@@ -284,7 +277,7 @@ function saveExpressCards() {
     }
 }
 
-// --- FIX EXPORT IOS NATIVE SHARE ---
+// --- EXPORTATION BLOB NATIVE (Identique à l'App QCM) ---
 function exportData(withStats) {
     let dataToExport = JSON.parse(JSON.stringify(db)); 
     if (!withStats) {
@@ -294,28 +287,16 @@ function exportData(withStats) {
     }
     
     const jsonStr = JSON.stringify(dataToExport);
-    const fileName = withStats ? "flashcards_backup.json" : "flashcards_partage.json";
-    const file = new File([jsonStr], fileName, { type: "application/json" });
-
-    // Force le menu de partage natif iOS si on est en mode Web App Plein écran
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-            files: [file],
-            title: fileName,
-            text: 'Voici mes flashcards !'
-        }).catch(err => console.log('Partage annulé', err));
-    } else {
-        // Fallback pour navigateur classique
-        const blob = new Blob([jsonStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const dl = document.createElement('a');
-        dl.href = url;
-        dl.download = fileName;
-        document.body.appendChild(dl);
-        dl.click();
-        document.body.removeChild(dl);
-        URL.revokeObjectURL(url);
-    }
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const dl = document.createElement('a');
+    dl.href = url;
+    dl.download = withStats ? "flashcards_backup.json" : "flashcards_partage.json";
+    document.body.appendChild(dl);
+    dl.click();
+    document.body.removeChild(dl);
+    URL.revokeObjectURL(url);
 }
 
 function importData(event) {
