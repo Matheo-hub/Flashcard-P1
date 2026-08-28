@@ -42,15 +42,13 @@
     <div id="tab-dossiers" class="view">
         <h1 class="page-title">Mes Dossiers</h1>
         <div class="text-link mb-3" onclick="createFolder()">+ Nouveau dossier</div>
-        <div class="card p-0" id="folders-container">
-            <!-- Injecté via JS -->
-        </div>
+        <div class="card p-0" id="folders-container"></div>
     </div>
 
-    <!-- ONGLET 3 : CRÉER -->
+    <!-- ONGLET 3 : CRÉER / MODIFIER -->
     <div id="tab-creer" class="view">
         <div class="card mb-4">
-            <h2 class="card-title mb-3">Ajout Classique</h2>
+            <h2 class="card-title mb-3" id="create-mode-title">Ajout Classique</h2>
             
             <div class="card-subtitle">Dossier cible</div>
             <select id="select-create-folder" class="select-input mb-4"></select>
@@ -64,7 +62,7 @@
             <div class="card-subtitle">Image Recto (Optionnel)</div>
             <input type="file" id="card-image-input" accept="image/*" class="file-input mb-4">
 
-            <button class="btn-primary" onclick="saveManualCard()">ENREGISTRER LA CARTE</button>
+            <button class="btn-primary" id="btn-save-manual" onclick="saveManualCard()">ENREGISTRER LA CARTE</button>
         </div>
 
         <div class="card mb-4">
@@ -73,8 +71,8 @@
             <div class="card-subtitle">Ajouter dans :</div>
             <select id="select-express-folder" class="select-input mb-3"></select>
             
-            <div class="card-subtitle mb-2">Format par ligne :<br><span style="font-size: 0.8rem; color: var(--text-muted);">Question | Réponse</span></div>
-            <textarea id="express-textarea" class="textarea-input mb-3" rows="6" dir="auto" placeholder="L'os fémur est : | Un os long de la cuisse&#10;La glycine | Acide aminé le plus simple"></textarea>
+            <div class="card-subtitle mb-2">Format par ligne :<br><span style="font-size: 0.8rem; color: var(--text-muted);">Question ; Réponse</span></div>
+            <textarea id="express-textarea" class="textarea-input mb-3" rows="6" dir="auto" placeholder="L'os fémur est : ; Un os long de la cuisse&#10;La glycine ; Acide aminé le plus simple"></textarea>
             
             <button class="btn-primary" onclick="saveExpressCards()">AJOUTER LES CARTES</button>
         </div>
@@ -96,24 +94,12 @@
             <h2 class="card-title mb-3">Réinitialisation</h2>
             <button class="btn-danger w-100" onclick="resetData()">Effacer toutes les données</button>
         </div>
-
-        <div class="card mb-4">
-            <h2 class="card-title mb-3">Comment ça marche ?</h2>
-            <p class="help-text">
-                <strong>Dossiers :</strong> Clique sur un dossier pour le dérouler. Utilise le bouton "Modifier" pour changer son nom.<br><br>
-                <strong>Boucle infinie :</strong> La session continue de te proposer des cartes jusqu'à ce que tu la quittes avec la croix.<br><br>
-                <strong>Répétition :</strong> Si tu as faux à une carte, elle reviendra automatiquement un peu plus tard dans ta pile pour te forcer à la retenir.
-            </p>
-        </div>
     </div>
 
     <!-- MOTEUR DE RÉVISION (Plein Écran) -->
     <div id="view-review" class="view-fullscreen">
         <div class="review-topbar">
-            <div class="badge-repetition">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px; vertical-align: middle;"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                Répétition
-            </div>
+            <div class="badge-repetition">🔄 Répétition</div>
             <div class="review-progress" id="review-counter">1/10</div>
             <div class="review-timer" id="review-timer">00:00</div>
             <button class="btn-close-review" onclick="closeReview()">✕</button>
@@ -121,23 +107,17 @@
         
         <div class="card-container" id="card-container">
             <div class="flashcard" id="flashcard">
-                
-                <!-- RECTO -->
                 <div class="card-face card-front">
                     <div class="card-label">QUESTION</div>
                     <img id="view-q-img" class="card-image" style="display:none;">
                     <div id="view-q-text" class="card-text">Chargement...</div>
-                    <button class="btn-reveal" id="btn-reveal" onclick="revealAnswer()">Voir la réponse<br><span style="font-size: 0.7rem; font-weight: normal; opacity: 0.7;">ou appuyez sur Espace</span></button>
+                    <button class="btn-reveal" id="btn-reveal" onclick="revealAnswer()">Voir la réponse</button>
                 </div>
-                
-                <!-- VERSO -->
                 <div class="card-face card-back">
                     <div class="card-label">QUESTION</div>
                     <div id="view-q-reminder" class="q-reminder">Chargement...</div>
-                    <img id="view-a-img" class="card-image" style="display:none;">
                     <div id="view-a-text" class="a-reveal" dir="auto">Réponse...</div>
                 </div>
-
             </div>
         </div>
 
@@ -170,4 +150,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
