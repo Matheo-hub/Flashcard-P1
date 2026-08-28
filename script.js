@@ -1,6 +1,6 @@
-let db = JSON.parse(localStorage.getItem('flashcards_db_p1_safe')) || { folders: [] };
+let db = JSON.parse(localStorage.getItem('flashcards_db_p1')) || { folders: [] };
 let currentImageBase64 = null;
-let editingCardInfo = null; // { folderId, cardId }
+let editingCardInfo = null; // Stocke { folderId, cardId } si on modifie une carte
 
 let reviewQueue = [];
 let currentQueueIndex = 0;
@@ -18,20 +18,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // --- NAVIGATION ---
 function switchTab(tabId, element) {
-    try {
-        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
-        if (element) element.classList.add('active');
-        if (tabId === 'tab-accueil' || tabId === 'tab-creer') updateDropdowns();
-        if (tabId === 'tab-dossiers') renderFoldersList();
-        
-        // Reset mode édition si on quitte l'onglet Créer
-        if (tabId !== 'tab-creer') {
-            editingCardInfo = null;
-            document.querySelector('#tab-creer .btn-primary').innerText = "ENREGISTRER LA CARTE";
-        }
-    } catch (err) {}
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+    if (element) element.classList.add('active');
+
+    if (tabId === 'tab-accueil' || tabId === 'tab-creer') updateDropdowns();
+    if (tabId === 'tab-dossiers') renderFoldersList();
+
+    // Réinitialise le mode édition quand on quitte l'onglet Créer
+    if (tabId !== 'tab-creer') {
+        editingCardInfo = null;
+        document.getElementById('create-mode-title').innerText = "Ajout Classique";
+        document.getElementById('btn-save-manual').innerText = "ENREGISTRER LA CARTE";
+    }
+}
+
+// --- GESTION DOSSIERS ET SOUS-DOSSIERS ---
+function saveDB() {
+    localStorage.setItem('flashcards_db_p1', JSON.stringify(db));
 }
 
 function updateDropdowns() {
@@ -41,31 +47,24 @@ function updateDropdowns() {
         if(!el) return;
         el.innerHTML = id === 'select-session-folder' ? '<option value="global">Toutes les matières (Mélange général)</option>' : '';
         
-        // Affichage hiérarchique simple dans les menus déroulants
         db.folders.forEach(f => {
-            const prefix = f.parentId ? "— " : "";
+            const prefix = f.parentId ? "— " : ""; // Indique visuellement un sous-dossier
             el.innerHTML += `<option value="${f.id}">${prefix}${f.name}</option>`;
         });
     });
-}
-
-// --- GESTION DOSSIERS & SOUS-DOSSIERS ---
-function saveDB() {
-    localStorage.setItem('flashcards_db_p1_safe', JSON.stringify(db));
 }
 
 function createFolder() {
     openFolderModal();
 }
 
-// Modal JS dynamique pour gérer Nom + Emplacement (Sous-dossier) sans toucher au HTML
 function openFolderModal(existingId = null) {
     const folder = existingId ? db.folders.find(f => f.id === existingId) : null;
     const defaultName = folder ? folder.name : "";
     
     let options = `<option value="none">Aucun (Dossier principal)</option>`;
     db.folders.forEach(f => {
-        if (existingId && f.id === existingId) return; // Un dossier ne peut pas être son propre parent
+        if (existingId && f.id === existingId) return; // Empêche de se mettre dans soi-même
         const selected = (folder && folder.parentId === f.id) ? "selected" : "";
         options += `<option value="${f.id}" ${selected}>${f.name}</option>`;
     });
@@ -112,31 +111,28 @@ function renderFoldersList() {
     const container = document.getElementById('folders-container');
     container.innerHTML = '';
     
-    if (!db.folders || db.folders.length === 0) {
+    if (db.folders.length === 0) {
         container.innerHTML = '<div style="padding: 20px; color: var(--text-muted); text-align: center;">Aucun dossier créé.</div>';
         return;
     }
 
-    // Séparer dossiers racines et sous-dossiers
+    // Affiche d'abord les dossiers principaux, puis leurs sous-dossiers
     const rootFolders = db.folders.filter(f => !f.parentId);
     
     rootFolders.forEach(folder => {
         renderSingleFolder(folder, container, 0);
-        // Chercher les enfants directs
         const children = db.folders.filter(f => f.parentId === folder.id);
-        children.forEach(child => {
-            renderSingleFolder(child, container, 20); // Indentation de 20px
-        });
+        children.forEach(child => renderSingleFolder(child, container, 20)); // Décale de 20px
     });
 }
 
-function renderSingleFolder(folder, container, marginText) {
+function renderSingleFolder(folder, container, indent) {
     const folderDiv = document.createElement('div');
     const count = folder.cards ? folder.cards.length : 0;
     const icon = folder.parentId ? "↳" : "📁";
     
     folderDiv.innerHTML = `
-        <div class="folder-item" style="padding-left: ${marginText + 20}px;">
+        <div class="folder-item" style="padding-left: ${indent + 20}px;">
             <div class="folder-info" onclick="toggleFolder(${folder.id})" style="flex:1;">
                 ${icon} ${folder.name} <span style="font-size:0.9rem; color:var(--text-muted); font-weight:normal;">(${count})</span>
             </div>
@@ -147,12 +143,12 @@ function renderSingleFolder(folder, container, marginText) {
 
     if (folder.expanded) {
         if (count === 0) {
-            folderDiv.innerHTML += `<div class="card-item" style="justify-content:center; padding-left: ${marginText + 40}px;">Dossier vide</div>`;
+            folderDiv.innerHTML += `<div class="card-item" style="justify-content:center; padding-left: ${indent + 40}px;">Dossier vide</div>`;
         } else {
             folder.cards.forEach(card => {
                 folderDiv.innerHTML += `
-                    <div class="card-item" style="padding-left: ${marginText + 45}px;" onclick="editCard(${folder.id}, ${card.id})">
-                        <span style="flex:1; cursor:pointer;">${card.q.substring(0, 30) || '[Image]'}</span>
+                    <div class="card-item" style="padding-left: ${indent + 45}px;" onclick="editCard(${folder.id}, ${card.id})">
+                        <span style="flex:1;">${card.q.substring(0, 30) || '[Image]'}</span>
                         <span class="card-delete" onclick="deleteCard(${folder.id}, ${card.id}, event)">✕</span>
                     </div>
                 `;
@@ -164,15 +160,25 @@ function renderSingleFolder(folder, container, marginText) {
 
 function toggleFolder(id) {
     const folder = db.folders.find(f => f.id === id);
-    if(folder) folder.expanded = !folder.expanded;
+    folder.expanded = !folder.expanded;
     renderFoldersList();
 }
 
 function deleteFolder(id, event) {
     event.stopPropagation();
     if (confirm("Supprimer ce dossier et TOUTES ses cartes ?")) {
+        // Supprime le dossier ET ses sous-dossiers
         db.folders = db.folders.filter(f => f.id !== id && f.parentId !== id);
         saveDB(); renderFoldersList(); updateDropdowns();
+    }
+}
+
+function deleteCard(folderId, cardId, event) {
+    event.stopPropagation();
+    if (confirm("Supprimer définitivement cette flashcard ?")) {
+        const folder = db.folders.find(f => f.id === folderId);
+        folder.cards = folder.cards.filter(c => c.id !== cardId);
+        saveDB(); renderFoldersList();
     }
 }
 
@@ -188,7 +194,10 @@ function editCard(folderId, cardId) {
     document.getElementById('card-a-input').value = card.a;
     currentImageBase64 = card.img || null;
     
-    document.querySelector('#tab-creer .btn-primary').innerText = "METTRE À JOUR LA CARTE";
+    document.getElementById('create-mode-title').innerText = "Modifier la carte";
+    document.getElementById('btn-save-manual').innerText = "METTRE À JOUR LA CARTE";
+    
+    // Bascule sur l'onglet créer
     switchTab('tab-creer', document.querySelectorAll('.tab-item')[2]);
 }
 
@@ -210,14 +219,13 @@ function saveManualCard() {
     if (!a) return alert("La réponse est obligatoire !");
 
     const folder = db.folders.find(f => f.id == folderId);
-    if (!folder.cards) folder.cards = [];
     
     if (editingCardInfo) {
-        // Mise à jour de la carte existante
+        // Mode Édition
         const targetFolder = db.folders.find(f => f.id == editingCardInfo.folderId);
         const cardIndex = targetFolder.cards.findIndex(c => c.id == editingCardInfo.cardId);
         
-        // Si le dossier a changé pendant l'édition
+        // Si l'utilisateur a changé le dossier cible pendant la modification
         if (editingCardInfo.folderId != folderId) {
             const cardToMove = targetFolder.cards.splice(cardIndex, 1)[0];
             cardToMove.q = q; cardToMove.a = a; cardToMove.img = currentImageBase64;
@@ -228,10 +236,11 @@ function saveManualCard() {
             targetFolder.cards[cardIndex].img = currentImageBase64;
         }
         editingCardInfo = null;
-        document.querySelector('#tab-creer .btn-primary').innerText = "ENREGISTRER LA CARTE";
+        document.getElementById('create-mode-title').innerText = "Ajout Classique";
+        document.getElementById('btn-save-manual').innerText = "ENREGISTRER LA CARTE";
         alert("Carte modifiée avec succès !");
     } else {
-        // Nouvelle carte
+        // Mode Création
         folder.cards.push({ id: Date.now(), createdAt: Date.now(), q: q, a: a, img: currentImageBase64, correct: 0, wrong: 0 });
         alert("Flashcard enregistrée !");
     }
@@ -253,11 +262,9 @@ function saveExpressCards() {
     const lines = text.split('\n');
     let addedCount = 0;
     const folder = db.folders.find(f => f.id == folderId);
-    if (!folder.cards) folder.cards = [];
 
     lines.forEach(line => {
-        // Utilisation du ; demandé
-        const parts = line.split(';');
+        const parts = line.split(';'); // Utilisation stricte du point-virgule
         if (parts.length >= 2) {
             const q = parts[0].trim();
             const a = parts.slice(1).join(';').trim(); 
@@ -277,18 +284,7 @@ function saveExpressCards() {
     }
 }
 
-function deleteCard(folderId, cardId, event) {
-    event.stopPropagation();
-    if (confirm("Supprimer définitivement cette flashcard ?")) {
-        const folder = db.folders.find(f => f.id === folderId);
-        if(folder && folder.cards) {
-            folder.cards = folder.cards.filter(c => c.id !== cardId);
-            saveDB(); renderFoldersList();
-        }
-    }
-}
-
-// --- EXPORT IOS FIX ---
+// --- FIX EXPORT IOS NATIVE SHARE ---
 function exportData(withStats) {
     let dataToExport = JSON.parse(JSON.stringify(db)); 
     if (!withStats) {
@@ -297,18 +293,29 @@ function exportData(withStats) {
         });
     }
     
-    // Utilisation de Blob pour forcer le téléchargement sur iOS/Safari
     const jsonStr = JSON.stringify(dataToExport);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
-    const dl = document.createElement('a');
-    dl.href = url;
-    dl.download = withStats ? "flashcards_backup.json" : "flashcards_partage.json";
-    document.body.appendChild(dl);
-    dl.click();
-    document.body.removeChild(dl);
-    URL.revokeObjectURL(url);
+    const fileName = withStats ? "flashcards_backup.json" : "flashcards_partage.json";
+    const file = new File([jsonStr], fileName, { type: "application/json" });
+
+    // Force le menu de partage natif iOS si on est en mode Web App Plein écran
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+            files: [file],
+            title: fileName,
+            text: 'Voici mes flashcards !'
+        }).catch(err => console.log('Partage annulé', err));
+    } else {
+        // Fallback pour navigateur classique
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const dl = document.createElement('a');
+        dl.href = url;
+        dl.download = fileName;
+        document.body.appendChild(dl);
+        dl.click();
+        document.body.removeChild(dl);
+        URL.revokeObjectURL(url);
+    }
 }
 
 function importData(event) {
